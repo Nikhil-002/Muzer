@@ -1,8 +1,10 @@
 import { prismaClient } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import {z} from "zod"
+//@ts-ignore
+import youtubesearchapi from "youtube-search-api"
 
-const YT_REGEX = new RegExp("https://www\.youtube\.com/watch\?v=XTp5jaRU3Ws")
+var YT_REGEX = /^(?:(?:https?:)?\/\/)?(?:www\.)?(?:m\.)?(?:youtu(?:be)?\.com\/(?:v\/|embed\/|watch(?:\/|\?v=))|youtu\.be\/)((?:\w|-){11})(?:\S+)?$/;
 
 const CreateStreamSchema = z.object({
     creatorId: z.string(),
@@ -11,9 +13,18 @@ const CreateStreamSchema = z.object({
 
 export async function POST(req:NextRequest) {
     try {
+        // console.log("Entered Rouote!!");
+        // const output = await req.json();
+        // console.log(output);
         const data = CreateStreamSchema.parse(await req.json())
-        const isYT = YT_REGEX.test(data.url)
-        if(!isYT){
+        // console.log(data);
+        
+        // console.log("Entered next Line!!");
+        const isYT = data.url.match(YT_REGEX)
+        // console.log(isYT);
+        
+        if(!isYT){ 
+            // console.log("inside !YT");
             return NextResponse.json({
             message : "Error while adding a stream"
         },{
@@ -21,15 +32,31 @@ export async function POST(req:NextRequest) {
         })    
         }
         const extractedId = data.url.split("?v=")[1]
-        prismaClient.stream.create({
+
+        const res = await youtubesearchapi.GetVideoDetails(extractedId)
+        console.log(res.title);
+        console.log(res.thumbnail.thumbnails);
+        const thumbnails = res.thumbnail.thumbnails;
+        thumbnails.sort((a: {width : number},b : {width:  number}) => a.width < b.width ? -1 : 1)
+        
+        const stream = await prismaClient.stream.create({
             data : {
                 userId: data.creatorId,
                 url: data.url,
                 extractedId,
-                type : "Youtube"
+                type : "Youtube",
+                title : res.title ?? "Can't find video",
+                smallImg : (thumbnails.length > 1 ? thumbnails[thumbnails.length -2].url : thumbnails[thumbnails.length-1].url) ?? "https://daily.jstor.org/wp-content/uploads/2023/01/good_times_with_bad_music_1050x700.jpg",
+                BigImg : thumbnails[thumbnails.length -1].url ?? "https://daily.jstor.org/wp-content/uploads/2023/01/good_times_with_bad_music_1050x700.jpg"
             }
         })
+        return NextResponse.json({
+            message: "Added Stream",
+            id : stream.id
+        })
     } catch (e) {
+        console.log(e);
+        
         return NextResponse.json({
             message : "Error while adding a stream"
         },{
@@ -37,4 +64,20 @@ export async function POST(req:NextRequest) {
         })
     }
     
+}
+
+
+
+export async function GET(req:NextRequest) {
+    const createrId = req.nextUrl.searchParams.get("creatorId")
+    console.log(createrId);
+    
+    const streams = await prismaClient.stream.findMany({
+        where : {
+            userId : createrId ?? ""
+        }
+    })
+    return NextResponse.json({
+        streams
+    })
 }
