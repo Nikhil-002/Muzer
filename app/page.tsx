@@ -5,13 +5,15 @@ import { Badge } from "@/components/ui/badge"
 import { Music, Users, Radio, Heart, Play, Headphones, Mic, Zap } from "lucide-react"
 import Link from "next/link"
 import { Appbar } from "./components/Appbar"
+import { Redirect } from "./components/Redirect"
 
 export default function MusicStreamingLanding() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-slate-900">
       {/* Header */}
       <header className="px-4 lg:px-6 h-16 flex items-center border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
-        <Appbar />
+        <Appbar /> 
+        <Redirect />
       </header>
 
       <main className="flex-1">
