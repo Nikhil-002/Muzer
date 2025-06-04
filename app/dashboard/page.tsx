@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Music, ChevronUp, ChevronDown, Plus, Play, Users, Clock } from "lucide-react"
 import Link from "next/link"
+import axios from "axios"
 
 interface QueueItem {
   id: string
@@ -26,6 +27,21 @@ export default function StreamVotingInterface() {
     duration: string
     youtubeId: string
   } | null>(null)
+
+  const REFRESH_INTERVAL_MS = 5 * 1000
+  
+  async function refreshStream() {
+    const res = await axios.get(`/api/streams/my`)
+    console.log(res);
+    
+  }
+
+  useEffect(() => {
+    refreshStream()
+    const interval = setInterval(() => {
+
+    },REFRESH_INTERVAL_MS)
+  },[])
 
   // Mock current playing video
   const currentVideo = {
