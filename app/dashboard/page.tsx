@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Music, ChevronUp, ChevronDown, Plus, Play, Users, Clock, AlertCircle } from "lucide-react"
+import { Music, ChevronUp, ChevronDown, Plus, Play, Users, Clock } from "lucide-react"
 import Link from "next/link"
-import { cn } from "@/lib/utils"
 
 interface QueueItem {
   id: string
@@ -19,11 +18,6 @@ interface QueueItem {
   youtubeId: string
 }
 
-// Type for tracking user votes
-type UserVotes = {
-  [songId: string]: "up" | "down" | null
-}
-
 export default function StreamVotingInterface() {
   const [youtubeUrl, setYoutubeUrl] = useState("")
   const [previewVideo, setPreviewVideo] = useState<{
@@ -32,9 +26,6 @@ export default function StreamVotingInterface() {
     duration: string
     youtubeId: string
   } | null>(null)
-
-  // Track user votes
-  const [userVotes, setUserVotes] = useState<UserVotes>({})
 
   // Mock current playing video
   const currentVideo = {
@@ -116,42 +107,17 @@ export default function StreamVotingInterface() {
   }
 
   const handleVote = (id: string, direction: "up" | "down") => {
-    // Check if user has already voted on this song
-    const previousVote = userVotes[id]
-
-    // Calculate vote change based on previous vote
-    let voteChange = 0
-
-    if (!previousVote) {
-      // First time voting
-      voteChange = direction === "up" ? 1 : -1
-    } else if (previousVote === direction) {
-      // Clicking the same button again - remove vote
-      voteChange = direction === "up" ? -1 : 1
-    } else {
-      // Changing vote direction (from up to down or vice versa)
-      voteChange = direction === "up" ? 2 : -2
-    }
-
-    // Update user votes
-    setUserVotes((prev) => ({
-      ...prev,
-      [id]: previousVote === direction ? null : direction,
-    }))
-
-    // Update queue with new vote count
     setQueue((prev) =>
       prev
-        .map((item) => (item.id === id ? { ...item, votes: item.votes + voteChange } : item))
+        .map((item) => (item.id === id ? { ...item, votes: item.votes + (direction === "up" ? 1 : -1) } : item))
         .sort((a, b) => b.votes - a.votes),
     )
   }
 
   const handleAddToQueue = () => {
     if (previewVideo) {
-      const newItemId = Date.now().toString()
       const newItem: QueueItem = {
-        id: newItemId,
+        id: Date.now().toString(),
         title: previewVideo.title,
         thumbnail: previewVideo.thumbnail,
         duration: previewVideo.duration,
@@ -159,13 +125,6 @@ export default function StreamVotingInterface() {
         submittedBy: "You",
         youtubeId: previewVideo.youtubeId,
       }
-
-      // Auto-upvote your own submission
-      setUserVotes((prev) => ({
-        ...prev,
-        [newItemId]: "up",
-      }))
-
       setQueue((prev) => [...prev, newItem].sort((a, b) => b.votes - a.votes))
       setYoutubeUrl("")
       setPreviewVideo(null)
@@ -267,11 +226,6 @@ export default function StreamVotingInterface() {
                   </div>
                 </div>
               )}
-
-              <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-800/30 p-2 rounded-lg">
-                <AlertCircle className="h-4 w-4 text-violet-400" />
-                <span>You can vote once per song. Click again to remove your vote.</span>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -312,12 +266,7 @@ export default function StreamVotingInterface() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleVote(item.id, "up")}
-                        className={cn(
-                          "h-6 w-6 p-0 hover:bg-green-900/20",
-                          userVotes[item.id] === "up"
-                            ? "text-green-400 bg-green-900/20"
-                            : "text-gray-400 hover:text-green-300",
-                        )}
+                        className="h-6 w-6 p-0 text-green-400 hover:text-green-300 hover:bg-green-900/20"
                       >
                         <ChevronUp className="h-4 w-4" />
                       </Button>
@@ -326,12 +275,7 @@ export default function StreamVotingInterface() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleVote(item.id, "down")}
-                        className={cn(
-                          "h-6 w-6 p-0 hover:bg-red-900/20",
-                          userVotes[item.id] === "down"
-                            ? "text-red-400 bg-red-900/20"
-                            : "text-gray-400 hover:text-red-300",
-                        )}
+                        className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-900/20"
                       >
                         <ChevronDown className="h-4 w-4" />
                       </Button>

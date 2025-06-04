@@ -9,15 +9,9 @@ const UpvoteSchema = z.object({
 
 export async function POST(req:NextRequest) {
     const session = await getServerSession();
+    console.log("inside upvote router");
+    
     //TODO: Replace this with id everywhere
-    if(!session?.user?.email){
-        return NextResponse.json({
-            Message : "unAuthenticated"
-        },{
-            status: 403
-        })
-    }
-
     const user = await prismaClient.user.findFirst({
         where:{
             email : session?.user?.email ?? ""
@@ -31,14 +25,21 @@ export async function POST(req:NextRequest) {
             status: 403
         })
     }
-
+    console.log("authenticated");
+    console.log(user.id);
+    
+    
     try {
         const data = UpvoteSchema.parse(await req.json())
+        console.log(data);
         await prismaClient.upvote.create({
             data: {
                 userId : user.id,
                 streamId: data.streamId
             }
+        });
+        return NextResponse.json({
+            message : "Done"
         })
     } catch (e) {
         return NextResponse.json({
