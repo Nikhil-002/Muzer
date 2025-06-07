@@ -38,6 +38,7 @@ interface QueueItem {
   bigImg: string
   votes: number
   userId: string
+  haveUpvoted: boolean
 }
 
 // Type for tracking user votes
@@ -71,7 +72,7 @@ export default function MusicStreamingInterface() {
 
 
   //Refresh the stream every 5 seconds 
-  const REFRESH_INTERVAL_MS = 30 * 1000
+  const REFRESH_INTERVAL_MS = 20 * 1000
 
 async function refreshStream() {
   try {
@@ -85,9 +86,10 @@ async function refreshStream() {
           title: stream.title,
           smallImg: stream.smallImg,
           bigImg: stream.BigImg,  // match your backend casing
-          votes: stream.votes ?? 0,
+          votes: stream.upvotes ?? 0,
+          haveupvoted: stream.haveUpvoted,
           userId: stream.userId,
-        }))
+        })).sort((a:any, b:any) => b.votes - a.votes)
       );
     }
   } catch (error) {
@@ -189,10 +191,12 @@ useEffect(() => {
 
     setQueue((prev) =>
       prev
-        .map((item) => (item.id === id ? { ...item, votes: item.votes + voteChange } : item))
+        .map((item) => (item.id === id ? { ...item, votes: item.votes + voteChange,
+            haveUpvoted: item.haveUpvoted
+         } : item))
         .sort((a, b) => b.votes - a.votes),
     )
-    fetch("api/streams/upvote", {
+    fetch(`api/streams/${direction === "up" ? "upvote" : "downvote"}`, {
         method : "POST",
         body: JSON.stringify({
             streamId: id
@@ -217,13 +221,14 @@ useEffect(() => {
                 bigImg: response.data.stream.BigImg,
                 votes: response.data.stream.votes ?? 0,
                 userId: response.data.stream.userId,
+                haveUpvoted: response.data.stream.haveUpvoted,
                 }].sort((a, b) => b.votes - a.votes)
             );
+            console.log("worked1........................................................................................");
             
         setMusicUrl("");
         setIsValidYT(false); 
         console.log(musicUrl);
-            console.log("worked1........................................................................................");
         }
     }   catch (error) {
         console.log(error);

@@ -31,7 +31,7 @@ export async function POST(req:NextRequest) {
     
     try {
         const data = UpvoteSchema.parse(await req.json())
-        console.log(data);
+        console.log("upvote route file: ",data);
         await prismaClient.upvote.create({
             data: {
                 userId : user.id,
@@ -49,6 +49,4 @@ export async function POST(req:NextRequest) {
         })
         
     }
-
-    const data = UpvoteSchema.parse(await req.json());
 }
