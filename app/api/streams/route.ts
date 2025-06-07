@@ -13,11 +13,11 @@ const CreateStreamSchema = z.object({
 
 export async function POST(req:NextRequest) {
     try {
-        // console.log("Entered Rouote!!");
+        console.log("Entered Stream Rouote!!");
         // const output = await req.json();
         // console.log(output);
         const data = CreateStreamSchema.parse(await req.json())
-        // console.log(data);
+        console.log(data);
         
         // console.log("Entered next Line!!");
         const isYT = data.url.match(YT_REGEX)
@@ -52,7 +52,8 @@ export async function POST(req:NextRequest) {
         })
         return NextResponse.json({
             message: "Added Stream",
-            id : stream.id
+            id : stream.id,
+            stream
         })
     } catch (e) {
         console.log(e);

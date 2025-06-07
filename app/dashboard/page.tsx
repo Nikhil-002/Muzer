@@ -1,150 +1,240 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Music, ChevronUp, ChevronDown, Plus, Play, Users, Clock } from "lucide-react"
+import {
+  Music,
+  ChevronUp,
+  ChevronDown,
+  Plus,
+  Play,
+  Pause,
+  Users,
+  Clock,
+  AlertCircle,
+  Share,
+  Copy,
+  Check,
+  SkipForward,
+  SkipBack,
+  Volume2,
+  Heart,
+  Eye,
+} from "lucide-react"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 import axios from "axios"
+import { useSession } from "next-auth/react"
 
 interface QueueItem {
   id: string
+  url: string
+  extractedId: string
   title: string
-  thumbnail: string
-  duration: string
+  smallImg: string
+  bigImg: string
   votes: number
-  submittedBy: string
-  youtubeId: string
+  userId: string
 }
 
-export default function StreamVotingInterface() {
-  const [youtubeUrl, setYoutubeUrl] = useState("")
-  const [previewVideo, setPreviewVideo] = useState<{
-    title: string
-    thumbnail: string
-    duration: string
-    youtubeId: string
-  } | null>(null)
+// Type for tracking user votes
+type UserVotes = {
+  [songId: string]: "up" | "down" | null
+}
 
-  const REFRESH_INTERVAL_MS = 5 * 1000
-  
-  async function refreshStream() {
-    const res = await axios.get(`/api/streams/my`)
-    console.log(res);
-    
+// Type for preview data that will be stored in DB
+interface PreviewData {
+  url: string
+  extractedId: string
+  title: string
+  smallImg: string
+  bigImg: string
+  userId: string
+}
+
+export default function MusicStreamingInterface() {
+  const [musicUrl, setMusicUrl] = useState("")
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null)
+
+  // Track user votes
+  const [userVotes, setUserVotes] = useState<UserVotes>({})
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(true)
+  const [currentTime, setCurrentTime] = useState(142) // 2:22
+  const [totalTime] = useState(198) // 3:18
+  const [isValidYT, setIsValidYT] = useState(false);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+
+
+  //Refresh the stream every 5 seconds 
+  const REFRESH_INTERVAL_MS = 30 * 1000
+
+async function refreshStream() {
+  try {
+    const res = await axios.get("/api/streams/my");
+    if (res.data?.streams) {
+      setQueue(
+        res.data.streams.map((stream: any) => ({
+          id: stream.id,
+          url: stream.url,
+          extractedId: stream.extractedId,
+          title: stream.title,
+          smallImg: stream.smallImg,
+          bigImg: stream.BigImg,  // match your backend casing
+          votes: stream.votes ?? 0,
+          userId: stream.userId,
+        }))
+      );
+    }
+  } catch (error) {
+    console.error("Error fetching streams:", error);
   }
+}
+
+useEffect(() => {
+  refreshStream();
+  const interval = setInterval(refreshStream, REFRESH_INTERVAL_MS);
+  return () => clearInterval(interval);
+}, []);
+
+  const {data : session} = useSession();
+
+  //Mock current user ID (in real app, this would come from auth)
+//   const currentUserId = res.data.user.id;
+  const currentUserId = session?.user?.id
+  // Mock current playing track
+  const currentTrack = {
+    // title: "Blinding Lights",
+    // artist: "The Weeknd",
+    // album: "After Hours",
+    // bigImg: "/placeholder.svg?height=300&width=300",
+    // submittedBy: "MusicFan23",
+    // duration: "3:18",
+  }
+
+  // Mock queue data with DB structure
+//   const [queue, setQueue] = useState<QueueItem[]>([...Array(queueInfo?.data?.streams.length)].map((_, i) => ({
+//     id: queueInfo?.data?.streams[i]?.id,
+//     url: queueInfo?.data?.streams[i]?.url,
+//     extractedId: queueInfo?.data?.streams[i]?.extractedId,
+//     title: queueInfo?.data?.streams[i]?.title,
+//     smallImg: queueInfo?.data?.streams[i]?.smallImg,
+//     bigImg: queueInfo?.data?.streams[i]?.bigImg,
+//     votes: 0,
+//     userId: queueInfo?.data?.streams[i]?.userId,
+//   })))
 
   useEffect(() => {
-    refreshStream()
-    const interval = setInterval(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showShareModal && !(event.target as Element).closest(".relative")) {
+        setShowShareModal(false)
+      }
+    }
 
-    },REFRESH_INTERVAL_MS)
-  },[])
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [showShareModal])
 
-  // Mock current playing video
-  const currentVideo = {
-    title: "Blinding Lights - The Weeknd",
-    youtubeId: "4NRXx6U8ABQ",
-    submittedBy: "MusicFan23",
-  }
+  // Simulate progress
+  useEffect(() => {
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        setCurrentTime((prev) => (prev < totalTime ? prev + 1 : prev))
+      }, 1000)
+      return () => clearInterval(interval)
+    }
+  }, [isPlaying, totalTime])
 
-  // Mock queue data
-  const [queue, setQueue] = useState<QueueItem[]>([
-    {
-      id: "1",
-      title: "Good 4 U - Olivia Rodrigo",
-      thumbnail: "/placeholder.svg?height=90&width=160",
-      duration: "2:58",
-      votes: 24,
-      submittedBy: "PopLover",
-      youtubeId: "gNi_6U5Pm_o",
-    },
-    {
-      id: "2",
-      title: "Stay - The Kid LAROI & Justin Bieber",
-      thumbnail: "/placeholder.svg?height=90&width=160",
-      duration: "2:21",
-      votes: 18,
-      submittedBy: "BieberFan",
-      youtubeId: "kTJczUoc26U",
-    },
-    {
-      id: "3",
-      title: "Heat Waves - Glass Animals",
-      thumbnail: "/placeholder.svg?height=90&width=160",
-      duration: "3:58",
-      votes: 15,
-      submittedBy: "IndieVibes",
-      youtubeId: "mRD0-GxqHVo",
-    },
-    {
-      id: "4",
-      title: "As It Was - Harry Styles",
-      thumbnail: "/placeholder.svg?height=90&width=160",
-      duration: "2:47",
-      votes: 12,
-      submittedBy: "StylesSupporter",
-      youtubeId: "H5v3kku4y6Q",
-    },
-    {
-      id: "5",
-      title: "Anti-Hero - Taylor Swift",
-      thumbnail: "/placeholder.svg?height=90&width=160",
-      duration: "3:20",
-      votes: 8,
-      submittedBy: "Swiftie13",
-      youtubeId: "b1kbLWvqugk",
-    },
-  ])
-
-  const extractYouTubeId = (url: string) => {
+  const  extractYouTubeId = (url: string): string | null => {
+    // Extract YouTube ID
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
     const match = url.match(regExp)
-    return match && match[2].length === 11 ? match[2] : null
+    return  match && match[2].length === 11 ? match[2] : null
+
+    // In real app, you would fetch this data from YouTube API
+    // For now, we'll use mock data with the extracted structure
+    // const ans = await axios.post("/api/streams", {
+    //     creatorId: currentUserId,
+    //     url : url
+    //   })
   }
 
   const handleUrlChange = (url: string) => {
-    setYoutubeUrl(url)
-    const videoId = extractYouTubeId(url)
-
-    if (videoId) {
-      // Mock preview data - in real app, you'd fetch from YouTube API
-      setPreviewVideo({
-        title: "Preview: YouTube Video",
-        thumbnail: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
-        duration: "3:45",
-        youtubeId: videoId,
-      })
-    } else {
-      setPreviewVideo(null)
-    }
+    setMusicUrl(url)
+    const ytId = extractYouTubeId(url)
+    setIsValidYT(!!ytId)
   }
 
   const handleVote = (id: string, direction: "up" | "down") => {
+    // const previousVote = userVotes[id]
+    let voteChange = 0
+    voteChange = direction === "up" ? 1 : -1
+
+    // if (!previousVote) {
+    //   voteChange = direction === "up" ? 1 : -1
+    // } else if (previousVote === direction) {
+    //   voteChange = direction === "up" ? -1 : 1
+    // } else {
+    //   voteChange = direction === "up" ? 2 : -2
+    // }
+
+    // setUserVotes((prev) => ({
+    //   ...prev,
+    //   [id]: previousVote === direction ? null : direction,
+    // }))
+
     setQueue((prev) =>
       prev
-        .map((item) => (item.id === id ? { ...item, votes: item.votes + (direction === "up" ? 1 : -1) } : item))
+        .map((item) => (item.id === id ? { ...item, votes: item.votes + voteChange } : item))
         .sort((a, b) => b.votes - a.votes),
     )
+    fetch("api/streams/upvote", {
+        method : "POST",
+        body: JSON.stringify({
+            streamId: id
+        })
+    })
   }
 
-  const handleAddToQueue = () => {
-    if (previewVideo) {
-      const newItem: QueueItem = {
-        id: Date.now().toString(),
-        title: previewVideo.title,
-        thumbnail: previewVideo.thumbnail,
-        duration: previewVideo.duration,
-        votes: 1,
-        submittedBy: "You",
-        youtubeId: previewVideo.youtubeId,
-      }
-      setQueue((prev) => [...prev, newItem].sort((a, b) => b.votes - a.votes))
-      setYoutubeUrl("")
-      setPreviewVideo(null)
+  const handleAddToQueue = async() => {
+    try{
+        const response =await axios.post("/api/streams", {
+          creatorId: currentUserId,
+          url : musicUrl
+        })
+        if(response.status === 200 && response.data.stream){
+            setQueue((prev) =>
+            [...prev,{
+                id: response.data.stream.id,
+                url: response.data.stream.url,
+                extractedId: response.data.stream.extractedId,
+                title: response.data.stream.title,
+                smallImg: response.data.stream.smallImg,
+                bigImg: response.data.stream.BigImg,
+                votes: response.data.stream.votes ?? 0,
+                userId: response.data.stream.userId,
+                }].sort((a, b) => b.votes - a.votes)
+            );
+            
+        setMusicUrl("");
+        setIsValidYT(false); 
+        console.log(musicUrl);
+            console.log("worked1........................................................................................");
+        }
+    }   catch (error) {
+        console.log(error);
     }
+    
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
   return (
@@ -162,42 +252,142 @@ export default function StreamVotingInterface() {
         <div className="ml-auto flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-gray-400">
             <Users className="h-4 w-4" />
-            <span>1,247 viewers</span>
+            <span>1,247 listeners</span>
           </div>
           <Badge className="bg-red-900/60 text-red-300 border border-red-700/50">🔴 LIVE</Badge>
+
+          {/* Share Button */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowShareModal(!showShareModal)}
+              className="border-gray-800 bg-gray-900/50 text-gray-300 hover:bg-gray-800 hover:text-white hover:border-gray-600"
+            >
+              <Share className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+
+            {/* Share Modal */}
+            {showShareModal && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50">
+                <div className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white font-semibold">Share Stream</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowShareModal(false)}
+                      className="text-gray-400 hover:text-white h-6 w-6 p-0"
+                    >
+                      ×
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-gray-400">Stream Link</label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={
+                          typeof window !== "undefined" ? window.location.href : "https://streamtune.com/stream/123"
+                        }
+                        readOnly
+                        className="bg-gray-800/50 border-gray-700 text-white text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          if (typeof window !== "undefined") {
+                            navigator.clipboard.writeText(window.location.href)
+                            setCopied(true)
+                            setTimeout(() => setCopied(false), 2000)
+                          }
+                        }}
+                        className="bg-violet-600 hover:bg-violet-500"
+                      >
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-gray-500 text-center">
+                    Share this link so fans can vote on your music!
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       <main className="flex-1 p-4 gap-6 grid lg:grid-cols-[1fr_400px]">
         {/* Main Content */}
         <div className="space-y-6">
-          {/* Current Video Player */}
+          {/* Current Track Player */}
           <Card className="border border-gray-800 bg-gray-900/50">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Play className="h-5 w-5 text-violet-400" />
-                  Now Playing
-                </CardTitle>
-                <Badge className="bg-violet-900/60 text-violet-300 border border-violet-700/50">
-                  Submitted by {currentVideo.submittedBy}
-                </Badge>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-6">
+                {/* Album Art */}
+                <div className="relative">
+                  <img
+                    src={currentTrack.bigImg || "/placeholder.svg"}
+                    alt={`${currentTrack.album} cover`}
+                    className="w-32 h-32 rounded-lg object-cover shadow-lg"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-lg"></div>
+                </div>
+
+                {/* Track Info & Controls */}
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <Badge className="bg-violet-900/60 text-violet-300 border border-violet-700/50 mb-2">
+                      Now Playing
+                    </Badge>
+                    <h2 className="text-2xl font-bold text-white">{currentTrack.title}</h2>
+                    {/* <p className="text-lg text-gray-300">{currentTrack.artist}</p>
+                    <p className="text-sm text-gray-400">{currentTrack.album}</p> */}
+                    {/* <p className="text-xs text-gray-500 mt-1">Submitted by {currentTrack.submittedBy}</p> */}
+                  </div>
+
+                  {/* Player Controls */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                        <SkipBack className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        className="bg-violet-600 hover:bg-violet-500 rounded-full h-12 w-12"
+                      >
+                        {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                        <SkipForward className="h-5 w-5" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-pink-400">
+                        <Heart className="h-5 w-5" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white ml-auto">
+                        <Volume2 className="h-5 w-5" />
+                      </Button>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">{formatTime(currentTime)}</span>
+                        <div className="flex-1 bg-gray-700 rounded-full h-1">
+                          <div
+                            className="bg-violet-500 h-1 rounded-full transition-all duration-1000"
+                            style={{ width: `${(currentTime / totalTime) * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-gray-400">{formatTime(totalTime)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src={`https://www.youtube.com/embed/${currentVideo.youtubeId}?autoplay=1`}
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full"
-                ></iframe>
-              </div>
-              <h3 className="text-lg font-semibold text-white">{currentVideo.title}</h3>
             </CardContent>
           </Card>
 
@@ -213,13 +403,13 @@ export default function StreamVotingInterface() {
               <div className="flex gap-2">
                 <Input
                   placeholder="Paste YouTube URL here..."
-                  value={youtubeUrl}
+                  value={musicUrl}
                   onChange={(e) => handleUrlChange(e.target.value)}
                   className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500"
                 />
                 <Button
                   onClick={handleAddToQueue}
-                  disabled={!previewVideo}
+                  disabled={!isValidYT}
                   className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-50"
                 >
                   Add
@@ -227,21 +417,54 @@ export default function StreamVotingInterface() {
               </div>
 
               {/* Preview */}
-              {previewVideo && (
-                <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+              {previewData && (
+                <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-violet-400">
+                    <Eye className="h-4 w-4" />
+                    <span>Preview (Data to be stored in DB)</span>
+                  </div>
+
                   <div className="flex gap-3">
-                    <img
-                      src={previewVideo.thumbnail || "/placeholder.svg"}
-                      alt="Video thumbnail"
-                      className="w-24 h-16 object-cover rounded"
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-medium text-white text-sm">{previewVideo.title}</h4>
-                      <p className="text-xs text-gray-400">{previewVideo.duration}</p>
+                    <div className="space-y-2">
+                      <img
+                        src={previewData.smallImg || "/placeholder.svg"}
+                        alt="Small thumbnail"
+                        className="w-16 h-12 object-cover rounded"
+                      />
+                      <p className="text-xs text-gray-500">Small Image</p>
+                    </div>
+                    <div className="space-y-2">
+                      <img
+                        src={previewData.bigImg || "/placeholder.svg"}
+                        alt="Large thumbnail"
+                        className="w-24 h-16 object-cover rounded"
+                      />
+                      <p className="text-xs text-gray-500">Big Image</p>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <h4 className="font-medium text-white text-sm">{previewData.title}</h4>
+                      <p className="text-xs text-gray-400">{previewData.artist}</p>
+                      <p className="text-xs text-gray-500">{previewData.duration}</p>
+                      <div className="text-xs text-gray-500 space-y-1 mt-2">
+                        <p>
+                          <span className="text-violet-400">URL:</span> {previewData.url}
+                        </p>
+                        <p>
+                          <span className="text-violet-400">ID:</span> {previewData.extractedId}
+                        </p>
+                        <p>
+                          <span className="text-violet-400">User ID:</span> {previewData.userId}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
+
+              <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-800/30 p-2 rounded-lg">
+                <AlertCircle className="h-4 w-4 text-violet-400" />
+                <span>New songs start with 0 votes. You can vote once per song.</span>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -264,25 +487,29 @@ export default function StreamVotingInterface() {
                   <div className="flex gap-3">
                     <div className="relative">
                       <img
-                        src={item.thumbnail || "/placeholder.svg"}
-                        alt={item.title}
-                        className="w-16 h-12 object-cover rounded"
+                        src={item.smallImg || "/placeholder.svg"}
+                        alt={`${item.title} thumbnail`}
+                        className="w-12 h-12 object-cover rounded"
                       />
-                      <div className="absolute top-0 left-0 bg-black/70 text-white text-xs px-1 rounded">
-                        #{index + 1}
-                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-white text-sm truncate">{item.title}</h4>
-                      <p className="text-xs text-gray-400">{item.duration}</p>
-                      <p className="text-xs text-gray-500">by {item.submittedBy}</p>
+                      <p className="text-xs text-gray-400 truncate">{item.artist}</p>
+                      <p className="text-xs text-gray-500">
+                        {item.duration} • by {item.submittedBy}
+                      </p>
                     </div>
                     <div className="flex flex-col items-center gap-1">
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => handleVote(item.id, "up")}
-                        className="h-6 w-6 p-0 text-green-400 hover:text-green-300 hover:bg-green-900/20"
+                        className={cn(
+                          "h-6 w-6 p-0 hover:bg-green-900/20",
+                          userVotes[item.id] === "up"
+                            ? "text-green-400 bg-green-900/20"
+                            : "text-gray-400 hover:text-green-300",
+                        )}
                       >
                         <ChevronUp className="h-4 w-4" />
                       </Button>
@@ -291,7 +518,12 @@ export default function StreamVotingInterface() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleVote(item.id, "down")}
-                        className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                        className={cn(
+                          "h-6 w-6 p-0 hover:bg-red-900/20",
+                          userVotes[item.id] === "down"
+                            ? "text-red-400 bg-red-900/20"
+                            : "text-gray-400 hover:text-red-300",
+                        )}
                       >
                         <ChevronDown className="h-4 w-4" />
                       </Button>

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession();
-    console.log(session);
+    console.log("my route file Id: ",session?.user?.email);
     
     const user = await prismaClient.user.findFirst({
         where : {

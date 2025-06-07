@@ -18,17 +18,35 @@ const handler = NextAuth({
             }
 
             try{
-                await prismaClient.user.create({
-                    data: {
+                await prismaClient.user.upsert({
+                    where : {
+                        email : params.user.email
+                    },
+                    update : {},
+                    create : {
                         email : params.user.email,
                         provider : "Google"
-                    }
-                })
+                    },
+                });
             } catch(e) {
-
+                console.log("Error creating user: ",e);
+                return false;
             }
             
             return true;
+        },
+        async session({session}) {   
+            if(session?.user?.email){
+                const dbUser = await prismaClient.user.findUnique({
+                    where :{
+                        email : session.user.email
+                    }
+                });
+                if(dbUser){
+                    (session.user as any).id = dbUser.id;
+                }
+            }
+            return session;
         }
     }
 })
