@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { toast } from "react-toastify";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -27,7 +28,9 @@ import {
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import axios from "axios"
-import { useSession } from "next-auth/react"
+import { signIn, signOut, useSession } from "next-auth/react"
+import { Appbar } from "../components/Appbar"
+import { Redirect } from "../components/Redirect"
 
 interface QueueItem {
   id: string
@@ -103,11 +106,11 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
-  const {data : session} = useSession();
+  const session = useSession();
 
   //Mock current user ID (in real app, this would come from auth)
 //   const currentUserId = res.data.user.id;
-  const currentUserId = session?.user?.id
+  const currentUserId = session?.data?.user?.id
   // Mock current playing track
   const currentTrack = {
     // title: "Blinding Lights",
@@ -118,17 +121,6 @@ useEffect(() => {
     // duration: "3:18",
   }
 
-  // Mock queue data with DB structure
-//   const [queue, setQueue] = useState<QueueItem[]>([...Array(queueInfo?.data?.streams.length)].map((_, i) => ({
-//     id: queueInfo?.data?.streams[i]?.id,
-//     url: queueInfo?.data?.streams[i]?.url,
-//     extractedId: queueInfo?.data?.streams[i]?.extractedId,
-//     title: queueInfo?.data?.streams[i]?.title,
-//     smallImg: queueInfo?.data?.streams[i]?.smallImg,
-//     bigImg: queueInfo?.data?.streams[i]?.bigImg,
-//     votes: 0,
-//     userId: queueInfo?.data?.streams[i]?.userId,
-//   })))
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -156,13 +148,6 @@ useEffect(() => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
     const match = url.match(regExp)
     return  match && match[2].length === 11 ? match[2] : null
-
-    // In real app, you would fetch this data from YouTube API
-    // For now, we'll use mock data with the extracted structure
-    // const ans = await axios.post("/api/streams", {
-    //     creatorId: currentUserId,
-    //     url : url
-    //   })
   }
 
   const handleUrlChange = (url: string) => {
@@ -174,20 +159,7 @@ useEffect(() => {
   const handleVote = (id: string, direction: "up" | "down") => {
     // const previousVote = userVotes[id]
     let voteChange = 0
-    voteChange = direction === "up" ? 1 : -1
-
-    // if (!previousVote) {
-    //   voteChange = direction === "up" ? 1 : -1
-    // } else if (previousVote === direction) {
-    //   voteChange = direction === "up" ? -1 : 1
-    // } else {
-    //   voteChange = direction === "up" ? 2 : -2
-    // }
-
-    // setUserVotes((prev) => ({
-    //   ...prev,
-    //   [id]: previousVote === direction ? null : direction,
-    // }))
+    voteChange = direction === "up" ? 1 : -1;
 
     setQueue((prev) =>
       prev
@@ -212,17 +184,7 @@ useEffect(() => {
         })
         if(response.status === 200 && response.data.stream){
             setQueue((prev) =>
-            [...prev,{
-                id: response.data.stream.id,
-                url: response.data.stream.url,
-                extractedId: response.data.stream.extractedId,
-                title: response.data.stream.title,
-                smallImg: response.data.stream.smallImg,
-                bigImg: response.data.stream.BigImg,
-                votes: response.data.stream.votes ?? 0,
-                userId: response.data.stream.userId,
-                haveUpvoted: response.data.stream.haveUpvoted,
-                }].sort((a, b) => b.votes - a.votes)
+            [...prev,response.data].sort((a, b) => b.votes - a.votes)
             );
             console.log("worked1........................................................................................");
             
@@ -235,6 +197,33 @@ useEffect(() => {
     }
     
   };
+
+  const handleShare = () => {    
+    const shareableLink = `${window.location.hostname}/creator/${currentUserId}`
+    navigator.clipboard.writeText(shareableLink).then(() => {
+        toast.success("Link copied to clipboard", {
+            position: "top-right", 
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+        })
+    }, (err) => {
+        console.error("Failed to copy text: ", err);
+        toast.error("Failed to copy text", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+        })
+    })
+  }
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -251,78 +240,36 @@ useEffect(() => {
             <Music className="h-5 w-5 text-white" />
           </div>
           <span className="font-bold text-xl bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
-            StreamTune
+            Muzer
           </span>
         </Link>
         <div className="ml-auto flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Users className="h-4 w-4" />
-            <span>1,247 listeners</span>
-          </div>
-          <Badge className="bg-red-900/60 text-red-300 border border-red-700/50">🔴 LIVE</Badge>
-
+          
           {/* Share Button */}
           <div className="relative">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowShareModal(!showShareModal)}
+              onClick={() => handleShare()}
               className="border-gray-800 bg-gray-900/50 text-gray-300 hover:bg-gray-800 hover:text-white hover:border-gray-600"
             >
               <Share className="h-4 w-4 mr-2" />
               Share
             </Button>
-
-            {/* Share Modal */}
-            {showShareModal && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50">
-                <div className="p-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-white font-semibold">Share Stream</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowShareModal(false)}
-                      className="text-gray-400 hover:text-white h-6 w-6 p-0"
-                    >
-                      ×
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm text-gray-400">Stream Link</label>
-                    <div className="flex gap-2">
-                      <Input
-                        value={
-                          typeof window !== "undefined" ? window.location.href : "https://streamtune.com/stream/123"
-                        }
-                        readOnly
-                        className="bg-gray-800/50 border-gray-700 text-white text-sm"
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          if (typeof window !== "undefined") {
-                            navigator.clipboard.writeText(window.location.href)
-                            setCopied(true)
-                            setTimeout(() => setCopied(false), 2000)
-                          }
-                        }}
-                        className="bg-violet-600 hover:bg-violet-500"
-                      >
-                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-gray-500 text-center">
-                    Share this link so fans can vote on your music!
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+          </div> 
+          <div>
+            <nav className="ml-auto flex gap-4">
+            <Button
+                variant="outline"
+                size="sm"
+                className="border-gray-700 text-gray-800 hover:bg-gray-800 hover:text-white"
+            >
+                {session.data?.user && <button onClick={() => signOut()}>Logout</button>}
+                {!session.data?.user && <button onClick={() => signIn()}>Signin</button>}
+                {/* Sign In */}
+            </Button>
+            </nav>
+        </div></div>
       </header>
 
       <main className="flex-1 p-4 gap-6 grid lg:grid-cols-[1fr_400px]">
@@ -424,10 +371,10 @@ useEffect(() => {
               {/* Preview */}
               {previewData && (
                 <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-violet-400">
+                  {/* <div className="flex items-center gap-2 text-sm text-violet-400">
                     <Eye className="h-4 w-4" />
                     <span>Preview (Data to be stored in DB)</span>
-                  </div>
+                  </div> */}
 
                   <div className="flex gap-3">
                     <div className="space-y-2">
@@ -543,3 +490,4 @@ useEffect(() => {
     </div>
   )
 }
+
