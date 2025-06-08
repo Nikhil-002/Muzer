@@ -1,6 +1,7 @@
 import StreamView from "@/app/components/StreamView";
 
-export default function ({params: {creatorId}}: {params: {creatorId : string}}){
+export default async function ({params}: {params: {creatorId : string}}){
+    const {creatorId} = await params;
     return(
         <div>
             <StreamView creatorId={creatorId} />

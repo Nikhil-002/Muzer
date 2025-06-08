@@ -71,7 +71,7 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
   const [currentTime, setCurrentTime] = useState(142); // 2:22
   const [totalTime] = useState(198); // 3:18
   const [isValidYT, setIsValidYT] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState<QueueItem | null>(null)
+  const [currentTrack, setCurrentTrack] = useState<QueueItem | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
 
   //Refresh the stream every 5 seconds
@@ -97,14 +97,13 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
             .sort((a: any, b: any) => b.votes - a.votes)
         );
         // console.log(res.data.ActiveStream);
-        setCurrentTrack(track => {
-          if(track?.id == res.data.ActiveStream?.stream?.id) {
-            return track
+        setCurrentTrack((track) => {
+          if (track?.id == res.data.ActiveStream?.stream?.id) {
+            return track;
           }
-          return res.data.ActiveStream.stream
-        })
+          return res.data.ActiveStream.stream;
+        });
         // setCurrentTrack(res.data.ActiveStream.stream)
-        
       }
     } catch (error) {
       console.error("Error fetching streams:", error);
@@ -124,12 +123,12 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
   const currentUserId = session?.data?.user?.id;
   // Mock current playing track
   // const currentTrack = {
-    // title: "Blinding Lights",
-    // artist: "The Weeknd",
-    // album: "After Hours",
-    // bigImg: "/placeholder.svg?height=300&width=300",
-    // submittedBy: "MusicFan23",
-    // duration: "3:18",
+  // title: "Blinding Lights",
+  // artist: "The Weeknd",
+  // album: "After Hours",
+  // bigImg: "/placeholder.svg?height=300&width=300",
+  // submittedBy: "MusicFan23",
+  // duration: "3:18",
   // };
 
   useEffect(() => {
@@ -257,13 +256,14 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
     );
   };
 
-  const playNext = async() => {
-    if(queue.length>0){
-      const res = await axios.get('/api/streams/next')
+  const playNext = async () => {
+    if (queue.length > 0) {
+      const res = await axios.get("/api/streams/next");
       console.log(res.data.stream);
-      setCurrentTrack(res.data.stream)
+      setCurrentTrack(res.data.stream);
+      setQueue(q => q.filter(x => x.id !== res.data.stream?.id))
     }
-  }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -316,7 +316,7 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
       <main className="flex-1 p-10 ml-10 gap-6 grid grid-cols-1 lg:grid-cols-[45%_45%]">
         {/* Queue Sidebar */}
         <div className="space-y-4">
-          <Card className="border border-gray-800 bg-gray-900/50">
+          <Card className="w-[600px] mx-auto border border-gray-800 bg-gray-900/50">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Clock className="h-5 w-5 text-cyan-400" />
@@ -386,93 +386,49 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
         {/* Main Content */}
         <div className="space-y-6">
           {/* Current Track Player */}
-          <Card className="border border-white-800 bg-gradient-to-br from-gray-900/70 to-gray-800/50 shadow-lg">
-  <CardContent className="p-6">
-    <div className="flex gap-6 items-center">
-      {/* Album Art */}
-      <div className="relative w-36 h-36 rounded-lg overflow-hidden shadow-md">
-        <img
-          src={currentTrack?.bigImg || "/placeholder.svg"}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/30" />
-      </div>
+          <Card className="w-[450px] h-[25rem] mx-auto border border-gray-800 bg-gradient-to-br from-gray-900/70 to-gray-800/50 shadow-lg">
+            <CardContent className="flex flex-col items-center justify-center h-full p-4 space-y-4">
+              {/* Badge */}
+              <Badge className="bg-violet-800/50 text-violet-300 border border-violet-600">
+                Now Playing
+              </Badge>
 
-      {/* Info + Controls */}
-      <div className="flex-1 flex flex-col justify-between space-y-4">
-        <div>
-          <Badge className="bg-violet-800/50 text-violet-300 border border-violet-600 mb-1">
-            Now Playing
-          </Badge>
-          <h2 className="text-2xl font-bold text-white truncate">
-            {currentTrack?.title || "No track selected"}
-          </h2>
-        </div>
+              {/* Title */}
+              <div className="w-full overflwo-hidden px-2">
+                <h6 className="text-center text-md font-semibold text-white px-2 truncate">
+                  {currentTrack?.title || "No track selected"}
+                </h6>
+              </div>
 
-        {/* Controls */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-gray-400 hover:text-white"
-            disabled = {true}
-          >
-            <SkipBack className="h-5 w-5" />
-          </Button>
-          <Button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="bg-violet-600 hover:bg-violet-500 rounded-full h-14 w-14"
-          >
-            {isPlaying ? (
-              <Pause className="h-6 w-6" />
-            ) : (
-              <Play className="h-6 w-6" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-gray-400 hover:text-white"
-            onClick={() => playNext()}
-          >
-            <SkipForward className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-gray-400 hover:text-white"
-          >
-            <Volume2 className="h-5 w-5" />
-          </Button>
-        </div>
+              {/* Embedded YouTube Preview */}
+              <div className="w-[400px] h-[18rem] rounded-lg overflow-hidden shadow-md">
+                {currentTrack?.url ? (
+                  <iframe
+                    className="w-full h-full"
+                    src={`https://www.youtube.com/embed/${currentTrack.extractedId}?autoplay=1&controls=1`}
+                    title="YouTube video player"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-700 flex items-center justify-center text-white text-sm">
+                    No track selected
+                  </div>
+                )}
+              </div>
 
-        {/* Progress Bar */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">
-              {formatTime(currentTime)}
-            </span>
-            <div className="flex-1 bg-gray-700 rounded-full h-1 overflow-hidden">
-              <div
-                className="bg-violet-500 h-full transition-all duration-500"
-                style={{
-                  width: `${(currentTime / totalTime) * 100}%`,
-                }}
-              />
-            </div>
-            <span className="text-xs text-gray-400">
-              {formatTime(totalTime)}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </CardContent>
-</Card>
-
+              {/* Play Next Button */}
+              <Button
+                onClick={playNext}
+                className="bg-violet-600 hover:bg-violet-500 text-white font-medium w-full mt-2"
+              >
+                Play Next
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* Add Song Section */}
-          <Card className="border border-gray-800 bg-gray-900/50">
+          <Card className="w-[550px] mx-auto border border-gray-800 bg-gray-900/50">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Plus className="h-5 w-5 text-pink-400" />
@@ -496,60 +452,6 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
                 </Button>
               </div>
 
-              {/* Preview */}
-              {previewData && (
-                <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 space-y-3">
-                  {/* <div className="flex items-center gap-2 text-sm text-violet-400">
-                    <Eye className="h-4 w-4" />
-                    <span>Preview (Data to be stored in DB)</span>
-                  </div> */}
-
-                  <div className="flex gap-3">
-                    <div className="space-y-2">
-                      <img
-                        src={previewData.smallImg || "/placeholder.svg"}
-                        alt="Small thumbnail"
-                        className="w-16 h-12 object-cover rounded"
-                      />
-                      <p className="text-xs text-gray-500">Small Image</p>
-                    </div>
-                    <div className="space-y-2">
-                      <img
-                        src={previewData.bigImg || "/placeholder.svg"}
-                        alt="Large thumbnail"
-                        className="w-24 h-16 object-cover rounded"
-                      />
-                      <p className="text-xs text-gray-500">Big Image</p>
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <h4 className="font-medium text-white text-sm">
-                        {previewData.title}
-                      </h4>
-                      <p className="text-xs text-gray-400">
-                        {previewData.artist}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {previewData.duration}
-                      </p>
-                      <div className="text-xs text-gray-500 space-y-1 mt-2">
-                        <p>
-                          <span className="text-violet-400">URL:</span>{" "}
-                          {previewData.url}
-                        </p>
-                        <p>
-                          <span className="text-violet-400">ID:</span>{" "}
-                          {previewData.extractedId}
-                        </p>
-                        <p>
-                          <span className="text-violet-400">User ID:</span>{" "}
-                          {previewData.userId}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-800/30 p-2 rounded-lg">
                 <AlertCircle className="h-4 w-4 text-violet-400" />
                 <span>
@@ -559,8 +461,6 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
             </CardContent>
           </Card>
         </div>
-
-        
       </main>
     </div>
   );
