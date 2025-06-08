@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
@@ -31,6 +31,8 @@ import axios from "axios";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Appbar } from "../components/Appbar";
 import { Redirect } from "../components/Redirect";
+//@ts-ignore
+import YouTubePlayer from "youtube-player";
 
 interface QueueItem {
   id: string;
@@ -59,7 +61,14 @@ interface PreviewData {
   userId: string;
 }
 
-export default function StreamView({ creatorId }: { creatorId: string }) {
+export default function StreamView({ 
+    creatorId,
+    playVideo = false
+  }: 
+  { 
+    creatorId: string;
+    playVideo: boolean
+  }) {
   const [musicUrl, setMusicUrl] = useState("");
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
 
@@ -69,10 +78,11 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
   const [copied, setCopied] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentTime, setCurrentTime] = useState(142); // 2:22
-  const [totalTime] = useState(198); // 3:18
+  const [playNextLoader, setPlayNextLoader] = useState(false)
   const [isValidYT, setIsValidYT] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<QueueItem | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const videoPlayerRef = useRef<HTMLDivElement>(null);
 
   //Refresh the stream every 5 seconds
   const REFRESH_INTERVAL_MS = 5 * 1000;
@@ -116,41 +126,38 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
     // return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!videoPlayerRef.current) return;
+    let player;
+
+    player = YouTubePlayer(videoPlayerRef.current);
+
+    // 'loadVideoById' is queued until the player is ready to receive API calls.
+    player.loadVideoById(currentTrack?.extractedId);
+
+    // 'playVideo' is queue until the player is ready to received API calls and after 'loadVideoById' has been called.
+    player.playVideo();
+    function eventHandler(event : any){
+      console.log(event);
+      console.log(event.data);
+      
+      if(event.data === 0){
+        playNext();
+      }
+    }
+
+    player.on("stateChange", eventHandler);
+    return () => {
+      player.destroy();
+    };
+  }, [currentTrack, videoPlayerRef]);
+
   const session = useSession();
 
   //Mock current user ID (in real app, this would come from auth)
   //   const currentUserId = res.data.user.id;
   const currentUserId = session?.data?.user?.id;
-  // Mock current playing track
-  // const currentTrack = {
-  // title: "Blinding Lights",
-  // artist: "The Weeknd",
-  // album: "After Hours",
-  // bigImg: "/placeholder.svg?height=300&width=300",
-  // submittedBy: "MusicFan23",
-  // duration: "3:18",
-  // };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showShareModal && !(event.target as Element).closest(".relative")) {
-        setShowShareModal(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showShareModal]);
-
-  // Simulate progress
-  useEffect(() => {
-    if (isPlaying) {
-      const interval = setInterval(() => {
-        setCurrentTime((prev) => (prev < totalTime ? prev + 1 : prev));
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isPlaying, totalTime]);
 
   const extractYouTubeId = (url: string): string | null => {
     // Extract YouTube ID
@@ -258,10 +265,16 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
 
   const playNext = async () => {
     if (queue.length > 0) {
-      const res = await axios.get("/api/streams/next");
-      console.log(res.data.stream);
-      setCurrentTrack(res.data.stream);
-      setQueue(q => q.filter(x => x.id !== res.data.stream?.id))
+      try {
+        setPlayNextLoader(true)
+        const res = await axios.get("/api/streams/next");
+        console.log(res.data.stream);
+        setCurrentTrack(res.data.stream);
+        setQueue((q) => q.filter((x) => x.id !== res.data.stream?.id));
+      } catch (error) {
+        
+      }
+      setPlayNextLoader(false)
     }
   };
 
@@ -386,7 +399,7 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
         {/* Main Content */}
         <div className="space-y-6">
           {/* Current Track Player */}
-          <Card className="w-[450px] h-[25rem] mx-auto border border-gray-800 bg-gradient-to-br from-gray-900/70 to-gray-800/50 shadow-lg">
+          <Card className="w-[450px] mx-auto border border-gray-800 bg-gradient-to-br from-gray-900/70 to-gray-800/50 shadow-lg">
             <CardContent className="flex flex-col items-center justify-center h-full p-4 space-y-4">
               {/* Badge */}
               <Badge className="bg-violet-800/50 text-violet-300 border border-violet-600">
@@ -394,36 +407,44 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
               </Badge>
 
               {/* Title */}
-              <div className="w-full overflwo-hidden px-2">
+              <div className="w-full overflow-hidden px-2">
                 <h6 className="text-center text-md font-semibold text-white px-2 truncate">
                   {currentTrack?.title || "No track selected"}
                 </h6>
               </div>
 
               {/* Embedded YouTube Preview */}
-              <div className="w-[400px] h-[18rem] rounded-lg overflow-hidden shadow-md">
-                {currentTrack?.url ? (
-                  <iframe
-                    className="w-full h-full"
-                    src={`https://www.youtube.com/embed/${currentTrack.extractedId}?autoplay=1&controls=1`}
-                    title="YouTube video player"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
+              <div className="w-full rounded-lg shadow-md">
+                {currentTrack ? (
+                  <div>
+                    {playVideo ? 
+                    <div>
+                      <div ref={videoPlayerRef} className="w-full" />
+                    </div> 
+                    : 
+                    <div>
+                      <img
+                        src={currentTrack.smallImg}
+                       />
+                    </div> }
+                  </div>
+                  ) 
+                  : 
+                  (
                   <div className="w-full h-full bg-gray-700 flex items-center justify-center text-white text-sm">
-                    No track selected
+                      No track selected
                   </div>
                 )}
               </div>
 
               {/* Play Next Button */}
-              <Button
+              {playVideo && <Button
+                disabled={playNextLoader}
                 onClick={playNext}
                 className="bg-violet-600 hover:bg-violet-500 text-white font-medium w-full mt-2"
               >
-                Play Next
-              </Button>
+                {playNextLoader ? "Loading..." : "Play Next"}  
+              </Button>}
             </CardContent>
           </Card>
 

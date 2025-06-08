@@ -50,7 +50,7 @@ const creatorId = "ee784d97-6f60-4c3c-a741-84481a02d854"
 export default function MusicStreamingInterface() {
     return (
         <div>
-            <StreamView creatorId={creatorId} />
+            <StreamView creatorId={creatorId} playVideo={true}/>
         </div>
     )
 }
