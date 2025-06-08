@@ -71,6 +71,7 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
   const [currentTime, setCurrentTime] = useState(142); // 2:22
   const [totalTime] = useState(198); // 3:18
   const [isValidYT, setIsValidYT] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState<QueueItem | null>(null)
   const [queue, setQueue] = useState<QueueItem[]>([]);
 
   //Refresh the stream every 5 seconds
@@ -95,6 +96,15 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
             }))
             .sort((a: any, b: any) => b.votes - a.votes)
         );
+        // console.log(res.data.ActiveStream);
+        setCurrentTrack(track => {
+          if(track?.id == res.data.ActiveStream?.stream?.id) {
+            return track
+          }
+          return res.data.ActiveStream.stream
+        })
+        // setCurrentTrack(res.data.ActiveStream.stream)
+        
       }
     } catch (error) {
       console.error("Error fetching streams:", error);
@@ -113,14 +123,14 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
   //   const currentUserId = res.data.user.id;
   const currentUserId = session?.data?.user?.id;
   // Mock current playing track
-  const currentTrack = {
+  // const currentTrack = {
     // title: "Blinding Lights",
     // artist: "The Weeknd",
     // album: "After Hours",
     // bigImg: "/placeholder.svg?height=300&width=300",
     // submittedBy: "MusicFan23",
     // duration: "3:18",
-  };
+  // };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -247,6 +257,14 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
     );
   };
 
+  const playNext = async() => {
+    if(queue.length>0){
+      const res = await axios.get('/api/streams/next')
+      console.log(res.data.stream);
+      setCurrentTrack(res.data.stream)
+    }
+  }
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -364,17 +382,17 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
             </CardContent>
           </Card>
         </div>
+
         {/* Main Content */}
         <div className="space-y-6">
           {/* Current Track Player */}
-          <Card className="border border-gray-800 bg-gradient-to-br from-gray-900/70 to-gray-800/50 shadow-lg">
+          <Card className="border border-white-800 bg-gradient-to-br from-gray-900/70 to-gray-800/50 shadow-lg">
   <CardContent className="p-6">
     <div className="flex gap-6 items-center">
       {/* Album Art */}
       <div className="relative w-36 h-36 rounded-lg overflow-hidden shadow-md">
         <img
-          src={currentTrack.bigImg || "/placeholder.svg"}
-          alt={`${currentTrack.album} cover`}
+          src={currentTrack?.bigImg || "/placeholder.svg"}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/30" />
@@ -387,7 +405,7 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
             Now Playing
           </Badge>
           <h2 className="text-2xl font-bold text-white truncate">
-            {currentTrack.title || "No track selected"}
+            {currentTrack?.title || "No track selected"}
           </h2>
         </div>
 
@@ -397,6 +415,7 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
             variant="ghost"
             size="icon"
             className="text-gray-400 hover:text-white"
+            disabled = {true}
           >
             <SkipBack className="h-5 w-5" />
           </Button>
@@ -414,15 +433,9 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
             variant="ghost"
             size="icon"
             className="text-gray-400 hover:text-white"
+            onClick={() => playNext()}
           >
             <SkipForward className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-gray-400 hover:text-pink-400 ml-auto"
-          >
-            <Heart className="h-5 w-5" />
           </Button>
           <Button
             variant="ghost"
