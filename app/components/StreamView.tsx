@@ -157,7 +157,7 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
     setIsValidYT(!!ytId);
   };
 
-  const handleVote = async(id: string, direction: "up" | "down") => {
+  const handleVote = async (id: string, direction: "up" | "down") => {
     const stream = queue.find((item) => item.id === id);
     if (!stream) return;
 
@@ -284,7 +284,7 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
                 variant="outline"
                 size="sm"
                 className="border-gray-700 text-gray-800 hover:bg-gray-800 hover:text-white"
-                onClick={() =>{
+                onClick={() => {
                   session.data?.user ? signOut() : signIn();
                 }}
               >
@@ -295,104 +295,168 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
         </div>
       </header>
 
-      <main className="flex-1 p-4 gap-6 grid lg:grid-cols-[1fr_400px]">
+      <main className="flex-1 p-10 ml-10 gap-6 grid grid-cols-1 lg:grid-cols-[45%_45%]">
+        {/* Queue Sidebar */}
+        <div className="space-y-4">
+          <Card className="border border-gray-800 bg-gray-900/50">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Clock className="h-5 w-5 text-cyan-400" />
+                Queue ({queue.length} songs)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
+              {queue.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-3 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors"
+                >
+                  <div className="flex gap-3">
+                    <div className="relative">
+                      <img
+                        src={item.smallImg}
+                        alt={`${item.title} thumbnail`}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-white text-sm truncate">
+                        {item.title}
+                      </h4>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={item.haveUpvoted}
+                        className={cn(
+                          "h-6 w-6 p-0 hover:bg-green-900/20",
+                          item.haveUpvoted
+                            ? "text-gray-400"
+                            : "text-green-400 bg-black-900/20 hover:text-green-300"
+                        )}
+                        onClick={() => handleVote(item.id, "up")}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                        {/* {item.haveUpvoted} */}
+                      </Button>
+                      <span className="text-sm font-medium text-white">
+                        {item.votes}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={!item.haveUpvoted}
+                        onClick={() => handleVote(item.id, "down")}
+                        className={cn(
+                          "h-6 w-6 p-0 hover:bg-red-900/20",
+                          item.haveUpvoted
+                            ? "text-red-400 bg-red-900/20"
+                            : "text-gray-400 hover:text-red-300"
+                        )}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
         {/* Main Content */}
         <div className="space-y-6">
           {/* Current Track Player */}
-          <Card className="border border-gray-800 bg-gray-900/50">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-6">
-                {/* Album Art */}
-                <div className="relative">
-                  <img
-                    src={currentTrack.bigImg || "/placeholder.svg"}
-                    alt={`${currentTrack.album} cover`}
-                    className="w-32 h-32 rounded-lg object-cover shadow-lg"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-lg"></div>
-                </div>
+          <Card className="border border-gray-800 bg-gradient-to-br from-gray-900/70 to-gray-800/50 shadow-lg">
+  <CardContent className="p-6">
+    <div className="flex gap-6 items-center">
+      {/* Album Art */}
+      <div className="relative w-36 h-36 rounded-lg overflow-hidden shadow-md">
+        <img
+          src={currentTrack.bigImg || "/placeholder.svg"}
+          alt={`${currentTrack.album} cover`}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
 
-                {/* Track Info & Controls */}
-                <div className="flex-1 space-y-4">
-                  <div>
-                    <Badge className="bg-violet-900/60 text-violet-300 border border-violet-700/50 mb-2">
-                      Now Playing
-                    </Badge>
-                    <h2 className="text-2xl font-bold text-white">
-                      {currentTrack.title}
-                    </h2>
-                    {/* <p className="text-lg text-gray-300">{currentTrack.artist}</p>
-                    <p className="text-sm text-gray-400">{currentTrack.album}</p> */}
-                    {/* <p className="text-xs text-gray-500 mt-1">Submitted by {currentTrack.submittedBy}</p> */}
-                  </div>
+      {/* Info + Controls */}
+      <div className="flex-1 flex flex-col justify-between space-y-4">
+        <div>
+          <Badge className="bg-violet-800/50 text-violet-300 border border-violet-600 mb-1">
+            Now Playing
+          </Badge>
+          <h2 className="text-2xl font-bold text-white truncate">
+            {currentTrack.title || "No track selected"}
+          </h2>
+        </div>
 
-                  {/* Player Controls */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-400 hover:text-white"
-                      >
-                        <SkipBack className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        className="bg-violet-600 hover:bg-violet-500 rounded-full h-12 w-12"
-                      >
-                        {isPlaying ? (
-                          <Pause className="h-6 w-6" />
-                        ) : (
-                          <Play className="h-6 w-6" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-400 hover:text-white"
-                      >
-                        <SkipForward className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-400 hover:text-pink-400"
-                      >
-                        <Heart className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-400 hover:text-white ml-auto"
-                      >
-                        <Volume2 className="h-5 w-5" />
-                      </Button>
-                    </div>
+        {/* Controls */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-white"
+          >
+            <SkipBack className="h-5 w-5" />
+          </Button>
+          <Button
+            onClick={() => setIsPlaying(!isPlaying)}
+            className="bg-violet-600 hover:bg-violet-500 rounded-full h-14 w-14"
+          >
+            {isPlaying ? (
+              <Pause className="h-6 w-6" />
+            ) : (
+              <Play className="h-6 w-6" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-white"
+          >
+            <SkipForward className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-pink-400 ml-auto"
+          >
+            <Heart className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-white"
+          >
+            <Volume2 className="h-5 w-5" />
+          </Button>
+        </div>
 
-                    {/* Progress Bar */}
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400">
-                          {formatTime(currentTime)}
-                        </span>
-                        <div className="flex-1 bg-gray-700 rounded-full h-1">
-                          <div
-                            className="bg-violet-500 h-1 rounded-full transition-all duration-1000"
-                            style={{
-                              width: `${(currentTime / totalTime) * 100}%`,
-                            }}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-400">
-                          {formatTime(totalTime)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Progress Bar */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">
+              {formatTime(currentTime)}
+            </span>
+            <div className="flex-1 bg-gray-700 rounded-full h-1 overflow-hidden">
+              <div
+                className="bg-violet-500 h-full transition-all duration-500"
+                style={{
+                  width: `${(currentTime / totalTime) * 100}%`,
+                }}
+              />
+            </div>
+            <span className="text-xs text-gray-400">
+              {formatTime(totalTime)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
 
           {/* Add Song Section */}
           <Card className="border border-gray-800 bg-gray-900/50">
@@ -483,74 +547,7 @@ export default function StreamView({ creatorId }: { creatorId: string }) {
           </Card>
         </div>
 
-        {/* Queue Sidebar */}
-        <div className="space-y-4">
-          <Card className="border border-gray-800 bg-gray-900/50">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Clock className="h-5 w-5 text-cyan-400" />
-                Queue ({queue.length} songs)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
-              {queue.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-3 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors"
-                >
-                  <div className="flex gap-3">
-                    <div className="relative">
-                      <img
-                        src={item.smallImg}
-                        alt={`${item.title} thumbnail`}
-                        className="w-12 h-12 object-cover rounded"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-white text-sm truncate">
-                        {item.title}
-                      </h4>
-                    </div>
-                    <div className="flex flex-col items-center gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={item.haveUpvoted}
-                        className={cn(
-                          "h-6 w-6 p-0 hover:bg-green-900/20",
-                          item.haveUpvoted
-                          ? "text-gray-400":
-                            "text-green-400 bg-black-900/20 hover:text-green-300"
-                        )}
-                        onClick={() => handleVote(item.id, "up")}
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                        {/* {item.haveUpvoted} */}
-                      </Button>
-                      <span className="text-sm font-medium text-white">
-                        {item.votes}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={!item.haveUpvoted}
-                        onClick={() => handleVote(item.id, "down")}
-                        className={cn(
-                          "h-6 w-6 p-0 hover:bg-red-900/20",
-                          item.haveUpvoted
-                            ? "text-red-400 bg-red-900/20"
-                            : "text-gray-400 hover:text-red-300"
-                        )}
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+        
       </main>
     </div>
   );
