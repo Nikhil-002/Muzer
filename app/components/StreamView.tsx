@@ -11,28 +11,17 @@ import {
   ChevronUp,
   ChevronDown,
   Plus,
-  Play,
-  Pause,
-  Users,
   Clock,
   AlertCircle,
   Share,
-  Copy,
-  Check,
-  SkipForward,
-  SkipBack,
-  Volume2,
-  Heart,
-  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import axios from "axios";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { Appbar } from "../components/Appbar";
-import { Redirect } from "../components/Redirect";
 //@ts-ignore
 import YouTubePlayer from "youtube-player";
+import { map } from "zod";
 
 interface QueueItem {
   id: string;
@@ -40,26 +29,12 @@ interface QueueItem {
   extractedId: string;
   title: string;
   smallImg: string;
-  bigImg: string;
+  BigImg: string;
   votes: number;
   userId: string;
   haveUpvoted: boolean;
 }
 
-// Type for tracking user votes
-type UserVotes = {
-  [songId: string]: "up" | "down" | null;
-};
-
-// Type for preview data that will be stored in DB
-interface PreviewData {
-  url: string;
-  extractedId: string;
-  title: string;
-  smallImg: string;
-  bigImg: string;
-  userId: string;
-}
 
 export default function StreamView({ 
     creatorId,
@@ -70,14 +45,6 @@ export default function StreamView({
     playVideo: boolean
   }) {
   const [musicUrl, setMusicUrl] = useState("");
-  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
-
-  // Track user votes
-  const [userVotes, setUserVotes] = useState<UserVotes>({});
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [currentTime, setCurrentTime] = useState(142); // 2:22
   const [playNextLoader, setPlayNextLoader] = useState(false)
   const [isValidYT, setIsValidYT] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<QueueItem | null>(null);
@@ -86,8 +53,11 @@ export default function StreamView({
 
   //Refresh the stream every 5 seconds
   const REFRESH_INTERVAL_MS = 5 * 1000;
+  const session = useSession();
 
-  async function refreshStream() {
+
+
+  async function refreshStream() {   
     try {
       const res = await axios.get(`/api/streams/?creatorId=${creatorId}`);
       if (res.data?.streams) {
@@ -119,11 +89,10 @@ export default function StreamView({
       console.error("Error fetching streams:", error);
     }
   }
-
   useEffect(() => {
     refreshStream();
     const interval = setInterval(refreshStream, REFRESH_INTERVAL_MS);
-    // return () => clearInterval(interval);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -151,13 +120,6 @@ export default function StreamView({
       player.destroy();
     };
   }, [currentTrack, videoPlayerRef]);
-
-  const session = useSession();
-
-  //Mock current user ID (in real app, this would come from auth)
-  //   const currentUserId = res.data.user.id;
-  const currentUserId = session?.data?.user?.id;
-
 
   const extractYouTubeId = (url: string): string | null => {
     // Extract YouTube ID
@@ -215,11 +177,15 @@ export default function StreamView({
   };
 
   const handleAddToQueue = async () => {
+    console.log("Entered HandleAddtoQueue");
+    
     try {
       const response = await axios.post("/api/streams", {
-        creatorId: currentUserId,
+        creatorId,
         url: musicUrl,
       });
+      console.log("response: ", response.data);
+      
       if (response.status === 200 && response.data.stream) {
         setQueue((prev) =>
           [...prev, response.data.stream].sort((a, b) => b.votes - a.votes)
@@ -234,7 +200,7 @@ export default function StreamView({
   };
 
   const handleShare = () => {
-    const shareableLink = `${window.location.hostname}/creator/${currentUserId}`;
+    const shareableLink = `${window.location.hostname}/creator/${creatorId}`;
     navigator.clipboard.writeText(shareableLink).then(
       () => {
         toast.success("Link copied to clipboard", {
@@ -316,7 +282,7 @@ export default function StreamView({
                 size="sm"
                 className="border-gray-700 text-gray-800 hover:bg-gray-800 hover:text-white"
                 onClick={() => {
-                  session.data?.user ? signOut() : signIn();
+                  session.data?.user ? signOut({callbackUrl: '/'}) : signIn();
                 }}
               >
                 {session.data?.user ? "Logout" : "Signin"}
@@ -424,7 +390,7 @@ export default function StreamView({
                     : 
                     <div>
                       <img
-                        src={currentTrack.smallImg}
+                        src={currentTrack.BigImg}
                        />
                     </div> }
                   </div>

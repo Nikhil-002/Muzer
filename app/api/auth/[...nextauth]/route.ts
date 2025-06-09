@@ -2,7 +2,7 @@ import { prismaClient } from "@/app/lib/db";
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-const handler = NextAuth({
+export const authOptions = {
     // I want to use Google
     providers : [
         GoogleProvider({
@@ -12,19 +12,19 @@ const handler = NextAuth({
     ],
     secret : process.env.NEXTAUTH_SECRET ?? "secret",
     callbacks:{
-        async signIn(params) {
-            if(!params.user.email){
+        async signIn({user}:any) {
+            if(!user.email){
                 return false;
             }
 
             try{
                 await prismaClient.user.upsert({
                     where : {
-                        email : params.user.email
+                        email : user.email
                     },
                     update : {},
                     create : {
-                        email : params.user.email,
+                        email : user.email,
                         provider : "Google"
                     },
                 });
@@ -35,7 +35,7 @@ const handler = NextAuth({
             
             return true;
         },
-        async session({session}) {   
+        async session({session}: any) {   
             if(session?.user?.email){
                 const dbUser = await prismaClient.user.findUnique({
                     where :{
@@ -49,6 +49,6 @@ const handler = NextAuth({
             return session;
         }
     }
-})
-
+}
+const handler = NextAuth(authOptions)
 export {handler as GET, handler as POST}

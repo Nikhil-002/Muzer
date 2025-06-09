@@ -19,7 +19,7 @@ export default function MusicStreamingLanding() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="w-full py-16 md:py-24">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 md:px-6">
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
               <div className="flex flex-col justify-center space-y-6">
                 <div className="space-y-4">
@@ -36,33 +36,6 @@ export default function MusicStreamingLanding() {
                     Stream live while your audience controls the playlist. The most interactive way to connect with your
                     fans through music.
                   </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg shadow-violet-900/30"
-                  >
-                    <Mic className="mr-2 h-5 w-5" />
-                    Start Streaming
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="border-2 border-pink-700 text-pink-400 hover:bg-pink-950/30 hover:text-pink-300"
-                  >
-                    <Play className="mr-2 h-5 w-5" />
-                    Watch Demo
-                  </Button>
-                </div>
-                <div className="flex items-center gap-6 text-sm">
-                  <div className="flex items-center gap-2 text-violet-400">
-                    <div className="h-2 w-2 bg-violet-500 rounded-full"></div>
-                    <span className="font-medium">10K+ Creators</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-pink-400">
-                    <div className="h-2 w-2 bg-pink-500 rounded-full"></div>
-                    <span className="font-medium">Live 24/7</span>
-                  </div>
                 </div>
               </div>
 
@@ -134,7 +107,7 @@ export default function MusicStreamingLanding() {
 
         {/* Features Section */}
         <section className="w-full py-16 bg-gray-900">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 md:px-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4 text-white">Why Creators Choose StreamTune</h2>
               <p className="text-gray-300 text-lg max-w-2xl mx-auto">
@@ -180,56 +153,7 @@ export default function MusicStreamingLanding() {
             </div>
           </div>
         </section>
-
-        {/* CTA Section */}
-        <section className="w-full py-20 bg-gradient-to-r from-violet-900 via-purple-900 to-pink-900 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(120,50,255,0.2),transparent_40%),radial-gradient(circle_at_70%_60%,rgba(255,70,180,0.2),transparent_40%)]"></div>
-          <div className="container px-4 md:px-6 relative z-10">
-            <div className="text-center text-white space-y-6">
-              <h2 className="text-4xl font-bold">Ready to Go Live?</h2>
-              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                Join thousands of creators building amazing communities through interactive music streaming
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 backdrop-blur-sm focus:border-violet-500 focus:ring-violet-500"
-                />
-                <Button className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white font-semibold px-8">
-                  Get Started
-                </Button>
-              </div>
-              <p className="text-sm text-gray-400">Free to start • No credit card required</p>
-            </div>
-          </div>
-        </section>
       </main>
-
-      {/* Footer */}
-      <footer className="py-8 bg-black text-gray-400 border-t border-gray-800">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between">
-            <div className="flex items-center gap-2 mb-4 sm:mb-0">
-              <div className="h-8 w-8 bg-gradient-to-br from-violet-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <Music className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-bold text-lg text-white">StreamTune</span>
-            </div>
-            <div className="flex gap-6 text-sm">
-              <Link href="#" className="hover:text-violet-400 transition-colors">
-                Privacy
-              </Link>
-              <Link href="#" className="hover:text-violet-400 transition-colors">
-                Terms
-              </Link>
-              <Link href="#" className="hover:text-violet-400 transition-colors">
-                Support
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
