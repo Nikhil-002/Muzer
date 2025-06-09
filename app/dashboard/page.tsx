@@ -1,7 +1,7 @@
 
-import { authOptions } from "../api/auth/[...nextauth]/route";
 import StreamView from "../components/StreamView";
 import { getServerSession } from "next-auth";
+import { authOptions } from "../lib/next-auth";
 
 export default async function MusicStreamingInterface() {
   const session = await getServerSession(authOptions)
