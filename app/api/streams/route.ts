@@ -53,30 +53,39 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ message: "No video details found" }, { status: 400 });
 }
 
-    const thumbnails = res?.thumbnail?.thumbnails;
-    thumbnails?.sort((a: { width: number }, b: { width: number }) =>
-      a.width < b.width ? -1 : 1
-    );
-    // console.log(res.title);
-    // console.log(res.thumbnail.thumbnails);
+const thumbnails = res?.thumbnail?.thumbnails ?? [];
 
-    const stream = await prismaClient.stream.create({
-      data: {
-        userId: data.creatorId,
-        url: data.url,
-        extractedId,
-        type: "Youtube",
-        title: res?.title ?? "Can't find Title",
-        smallImg:
-          (thumbnails?.length > 1
-            ? thumbnails[thumbnails?.length - 2].url
-            : thumbnails[thumbnails?.length - 1].url) ??
-          "https://daily.jstor.org/wp-content/uploads/2023/01/good_times_with_bad_music_1050x700.jpg",
-        BigImg:
-          thumbnails[thumbnails?.length - 1].url ??
-          "https://daily.jstor.org/wp-content/uploads/2023/01/good_times_with_bad_music_1050x700.jpg",
-      },
-    });
+// Sort only if you have more than 1
+if (thumbnails.length > 1) {
+  thumbnails.sort((a: { width: number }, b: { width: number }) =>
+    a.width - b.width
+  );
+}
+
+// Fallback image (used if thumbnails are empty or invalid)
+const fallbackImg = "https://daily.jstor.org/wp-content/uploads/2023/01/good_times_with_bad_music_1050x700.jpg";
+
+// Pick small and big images with fallback
+const smallImg =
+  thumbnails.length > 1
+    ? thumbnails[thumbnails.length - 2]?.url ?? fallbackImg
+    : thumbnails[0]?.url ?? fallbackImg;
+
+const bigImg =
+  thumbnails[thumbnails.length - 1]?.url ?? fallbackImg;
+
+const stream = await prismaClient.stream.create({
+  data: {
+    userId: data.creatorId,
+    url: data.url,
+    extractedId,
+    type: "Youtube",
+    title: res?.title ?? "Can't find Title",
+    smallImg,
+    BigImg: bigImg,
+  },
+});
+
     return NextResponse.json({
       message: "Added Stream",
       stream,
