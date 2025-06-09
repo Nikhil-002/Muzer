@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 }
 
     const thumbnails = res?.thumbnail?.thumbnails;
-    thumbnails.sort((a: { width: number }, b: { width: number }) =>
+    thumbnails?.sort((a: { width: number }, b: { width: number }) =>
       a.width < b.width ? -1 : 1
     );
     // console.log(res.title);
