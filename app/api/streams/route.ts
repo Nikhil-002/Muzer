@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { prismaClient } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -51,7 +53,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ message: "No video details found" }, { status: 400 });
 }
 
-    const thumbnails = res.thumbnail.thumbnails;
+    const thumbnails = res?.thumbnail?.thumbnails;
     thumbnails.sort((a: { width: number }, b: { width: number }) =>
       a.width < b.width ? -1 : 1
     );
@@ -64,7 +66,7 @@ export async function POST(req: NextRequest) {
         url: data.url,
         extractedId,
         type: "Youtube",
-        title: res.title ?? "Can't find video",
+        title: res?.title ?? "Can't find Title",
         smallImg:
           (thumbnails.length > 1
             ? thumbnails[thumbnails.length - 2].url
