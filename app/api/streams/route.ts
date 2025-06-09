@@ -68,12 +68,12 @@ export async function POST(req: NextRequest) {
         type: "Youtube",
         title: res?.title ?? "Can't find Title",
         smallImg:
-          (thumbnails.length > 1
-            ? thumbnails[thumbnails.length - 2].url
-            : thumbnails[thumbnails.length - 1].url) ??
+          (thumbnails?.length > 1
+            ? thumbnails[thumbnails?.length - 2].url
+            : thumbnails[thumbnails?.length - 1].url) ??
           "https://daily.jstor.org/wp-content/uploads/2023/01/good_times_with_bad_music_1050x700.jpg",
         BigImg:
-          thumbnails[thumbnails.length - 1].url ??
+          thumbnails[thumbnails?.length - 1].url ??
           "https://daily.jstor.org/wp-content/uploads/2023/01/good_times_with_bad_music_1050x700.jpg",
       },
     });
