@@ -27,14 +27,13 @@ export default function MusicStreamingLanding() {
                     🎵 Fan-Powered Music
                   </Badge>
                   <h1 className="text-4xl font-bold tracking-tight sm:text-6xl text-white">
-                    Your Fans{" "}
+                    Let your fans {" "}
                     <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      Pick the Music
+                      choose the music
                     </span>
                   </h1>
                   <p className="text-xl text-gray-300 max-w-[500px]">
-                    Stream live while your audience controls the playlist. The most interactive way to connect with your
-                    fans through music.
+                    Go live and let your audience add songs and vote for what plays next — it's the easiest way to stream and connect through music.
                   </p>
                 </div>
               </div>
@@ -109,7 +108,7 @@ export default function MusicStreamingLanding() {
         <section className="w-full py-16 bg-gray-900">
           <div className="container mx-auto px-4 md:px-6">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4 text-white">Why Creators Choose StreamTune</h2>
+              <h2 className="text-3xl font-bold mb-4 text-white">Why Creators Choose Muzer</h2>
               <p className="text-gray-300 text-lg max-w-2xl mx-auto">
                 Turn your streams into interactive experiences that keep fans coming back
               </p>
@@ -123,7 +122,7 @@ export default function MusicStreamingLanding() {
                   <CardTitle className="text-xl text-white">Fan Control</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <p className="text-gray-400">Your audience votes on songs and shapes your stream in real-time</p>
+                  <p className="text-gray-400">Real-time song voting empowers your audience to shape the listening experience</p>
                 </CardContent>
               </Card>
 
@@ -135,7 +134,7 @@ export default function MusicStreamingLanding() {
                   <CardTitle className="text-xl text-white">Live Interaction</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <p className="text-gray-400">Real-time chat, reactions, and instant feedback from your community</p>
+                  <p className="text-gray-400">users can add songs to the queue and upvote/downvote to shape the playlist in real-time</p>
                 </CardContent>
               </Card>
 
@@ -144,10 +143,10 @@ export default function MusicStreamingLanding() {
                   <div className="h-16 w-16 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-cyan-900/30">
                     <Headphones className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl text-white">HD Audio</CardTitle>
+                  <CardTitle className="text-xl text-white">HD Video</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <p className="text-gray-400">Crystal-clear streaming with professional mixing tools</p>
+                  <p className="text-gray-400">Crystal-clear streaming with embedded youtube video</p>
                 </CardContent>
               </Card>
             </div>

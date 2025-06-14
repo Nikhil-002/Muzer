@@ -24,25 +24,24 @@ export async function POST(req: NextRequest) {
     console.log(data);
 
     // console.log("Entered next Line!!");
-    const isYT = data.url.match(YT_REGEX);
-    // console.log(isYT);
-
-    if (!isYT) {
-      // console.log("inside !YT");
-      return NextResponse.json(
-        {
-          message: "Error while adding a stream",
-        },
-        {
-          status: 411,
-        }
-      );
+const isYT = data.url.match(YT_REGEX);
+if (!isYT || !isYT[1]) {
+  return NextResponse.json(
+    {
+      message: "Invalid YouTube URL",
+    },
+    {
+      status: 411,
     }
-    const extractedId = data.url.split("?v=")[1];
+  );
+}
+const extractedId = isYT[1]; // works for all valid formats
     console.log(extractedId);
     let res;
     try{
       res = await youtubesearchapi.GetVideoDetails(extractedId);
+      console.log(res);
+      
     } 
     catch (err) {
   console.error("Error fetching video details:", err);
