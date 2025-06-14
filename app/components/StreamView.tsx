@@ -46,8 +46,9 @@ export default function StreamView({
   }) {
   const [musicUrl, setMusicUrl] = useState("");
   const [playNextLoader, setPlayNextLoader] = useState(false)
+  const [addLoader, setAddLoader] = useState(false)
   const [isValidYT, setIsValidYT] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState<QueueItem | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<QueueItem>();
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const videoPlayerRef = useRef<HTMLDivElement>(null);
 
@@ -111,7 +112,9 @@ export default function StreamView({
       console.log(event.data);
       
       if(event.data === 0){
+        console.log("Before PlayNext function");
         playNext();
+        console.log("playNext() hitted");
       }
     }
 
@@ -180,6 +183,7 @@ export default function StreamView({
     console.log("Entered HandleAddtoQueue");
     
     try {
+      setAddLoader(true)
       const response = await axios.post("/api/streams", {
         creatorId,
         url: musicUrl,
@@ -197,6 +201,7 @@ export default function StreamView({
     } catch (error) {
       console.log(error);
     }
+    setAddLoader(false)
   };
 
   const handleShare = () => {
@@ -232,28 +237,29 @@ export default function StreamView({
   const playNext = async () => {
     if (queue.length > 0) {
       try {
+        console.log("inside playNext");
         setPlayNextLoader(true)
+        console.log("before playnext api hit");
         const res = await axios.get("/api/streams/next");
         console.log(res.data.stream);
+        console.log("after playnext api hit");
         setCurrentTrack(res.data.stream);
+        console.log(currentTrack);
+        
         setQueue((q) => q.filter((x) => x.id !== res.data.stream?.id));
       } catch (error) {
+        console.log(error);
         
       }
       setPlayNextLoader(false)
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-slate-900">
       {/* Header */}
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+      <header className="px-4 sm:px-6 h-16 flex items-center border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <Link href="/" className="flex items-center justify-center gap-2">
           <div className="h-8 w-8 bg-gradient-to-br from-violet-500 via-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
             <Music className="h-5 w-5 text-white" />
@@ -292,10 +298,10 @@ export default function StreamView({
         </div>
       </header>
 
-      <main className="flex-1 p-10 ml-10 gap-6 grid grid-cols-1 lg:grid-cols-[45%_45%]">
+      <main className="flex-1 p-4 sm:p-6 lg:p-10 gap-6 grid grid-cols-1 xl:grid-cols-[45%_45%]">
         {/* Queue Sidebar */}
         <div className="space-y-4">
-          <Card className="w-[600px] mx-auto border border-gray-800 bg-gray-900/50">
+          <Card className="w-full max-w-[600px] mx-auto border border-gray-800 bg-gray-900/50">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Clock className="h-5 w-5 text-cyan-400" />
@@ -365,7 +371,7 @@ export default function StreamView({
         {/* Main Content */}
         <div className="space-y-6">
           {/* Current Track Player */}
-          <Card className="w-[450px] mx-auto border border-gray-800 bg-gradient-to-br from-gray-900/70 to-gray-800/50 shadow-lg">
+          <Card className="w-full max-w-[450px] mx-auto border border-gray-800 bg-gradient-to-br from-gray-900/70 to-gray-800/50 shadow-lg">
             <CardContent className="flex flex-col items-center justify-center h-full p-4 space-y-4">
               {/* Badge */}
               <Badge className="bg-violet-800/50 text-violet-300 border border-violet-600">
@@ -390,7 +396,8 @@ export default function StreamView({
                     : 
                     <div>
                       <img
-                        src={currentTrack.BigImg}
+                        src={currentTrack?.BigImg}
+                        className="w-full rounded-lg"
                        />
                     </div> }
                   </div>
@@ -415,7 +422,7 @@ export default function StreamView({
           </Card>
 
           {/* Add Song Section */}
-          <Card className="w-[550px] mx-auto border border-gray-800 bg-gray-900/50">
+          <Card className="w-full max-w-[550px] mx-auto border border-gray-800 bg-gray-900/50">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Plus className="h-5 w-5 text-pink-400" />
@@ -432,10 +439,10 @@ export default function StreamView({
                 />
                 <Button
                   onClick={handleAddToQueue}
-                  disabled={!isValidYT}
+                  disabled={!isValidYT || addLoader}
                   className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:opacity-50"
                 >
-                  Add
+                  {addLoader ? "Loading..." : "Add"}  
                 </Button>
               </div>
 
