@@ -33,7 +33,7 @@ export default function MusicStreamingLanding() {
                     </span>
                   </h1>
                   <p className="text-xl text-gray-300 max-w-[500px]">
-                    Go live and let your audience add songs and vote for what plays next — it's the easiest way to stream and connect through music.
+                    Go live and let your audience add songs and vote for what plays next — easiest way to stream and connect through music
                   </p>
                 </div>
               </div>
